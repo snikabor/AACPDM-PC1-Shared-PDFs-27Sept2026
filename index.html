@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>AACPDM PC1 — Shared PDFs</title>
+<style>
+  :root {
+    --fg: #1a1a1a;
+    --muted: #666;
+    --bg: #fafafa;
+    --card: #ffffff;
+    --accent: #0b5fa4;
+    --border: #e4e4e7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.5;
+  }
+  header { margin-bottom: 2rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.35rem; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin: 0; }
+  .expiry {
+    display: inline-block;
+    margin-top: 0.9rem;
+    padding: 0.35rem 0.7rem;
+    background: #fff4e0;
+    border: 1px solid #f0c674;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #7a4a00;
+  }
+  ul.pdf-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0 0;
+  }
+  ul.pdf-list li {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 0.6rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  ul.pdf-list a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    flex: 1;
+    word-break: break-word;
+  }
+  ul.pdf-list a:hover { text-decoration: underline; }
+  .icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    color: #c0392b;
+  }
+  .empty, .error {
+    padding: 1.25rem;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 0.95rem;
+  }
+  .error { color: #a00; border-color: #f4c7c3; background: #fff5f5; }
+  footer {
+    margin-top: 3rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>AACPDM PC1 — Shared PDFs</h1>
+  <p class="subtitle">Read-only download page. Click any file to download.</p>
+  <span class="expiry">⏳ Link expires 2026-10-12</span>
+</header>
+
+<ul class="pdf-list" id="pdf-list">
+  <li class="empty" id="loading">Loading files…</li>
+</ul>
+
+<footer>
+  Hosted on GitHub Pages · <a href="https://github.com/snikabor/AACPDM-PC1-Shared-PDFs-27Sept2026" style="color:var(--muted);">source</a>
+</footer>
+
+<script>
+(async function () {
+  const OWNER = "snikabor";
+  const REPO  = "AACPDM-PC1-Shared-PDFs-27Sept2026";
+  const PATH  = "pdfs";
+  const list  = document.getElementById("pdf-list");
+  const loading = document.getElementById("loading");
+
+  const pdfIcon = `<svg class="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H14a1 1 0 0 1-1-1V3.5zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0 3h5v1.5H8V19z"/>
+  </svg>`;
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`, {
+      headers: { "Accept": "application/vnd.github+json" }
+    });
+    if (!res.ok) throw new Error("GitHub API " + res.status);
+    const files = await res.json();
+    const pdfs = files
+      .filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".pdf"))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+    loading.remove();
+    if (pdfs.length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "No PDFs uploaded yet. Check back soon.";
+      list.appendChild(li);
+      return;
+    }
+
+    for (const f of pdfs) {
+      const li = document.createElement("li");
+      const label = f.name.replace(/\.pdf$/i, "").replace(/[-_]+/g, " ");
+      li.innerHTML = `${pdfIcon}<a href="${f.download_url}" download>${label}</a>`;
+      list.appendChild(li);
+    }
+  } catch (err) {
+    loading.remove();
+    const li = document.createElement("li");
+    li.className = "error";
+    li.textContent = "Could not load file list: " + err.message;
+    list.appendChild(li);
+  }
+})();
+</script>
+</body>
+</html>
